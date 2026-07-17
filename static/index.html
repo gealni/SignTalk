@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignTalk - Penerjemah Bahasa Isyarat BISINDO</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Background decorative glow elements -->
+        <div class="glow-sphere glow-1"></div>
+        <div class="glow-sphere glow-2"></div>
+
+        <!-- Sidebar / Navigation -->
+        <header class="main-header">
+            <div class="logo-area">
+                <img src="logo.png" alt="SignTalk Logo" class="logo-img">
+                <div>
+                    <h1>SignTalk</h1>
+                    <p class="tagline">Penerjemah Bahasa Isyarat BISINDO</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <div id="status-badge" class="status-badge status-offline">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Menghubungkan ke Server...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="workspace">
+            <div class="grid-container">
+                
+                <!-- Left Panel: Webcam feed and detection info -->
+                <section class="panel-card camera-panel">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-video text-primary"></i> Kamera Deteksi</h2>
+                        <div class="header-actions">
+                            <button id="btn-toggle-cam" class="btn btn-primary">
+                                <i class="fa-solid fa-camera"></i> Mulai Kamera
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="video-container">
+                        <video id="webcam" autoplay playsinline muted></video>
+                        <canvas id="overlay-canvas"></canvas>
+                        
+                        <!-- Overlay when camera is off -->
+                        <div id="camera-overlay" class="camera-overlay">
+                            <i class="fa-solid fa-video-slash overlay-icon"></i>
+                            <p>Kamera Dinonaktifkan</p>
+                            <p class="subtext">Klik tombol 'Mulai Kamera' untuk memulai deteksi real-time</p>
+                        </div>
+
+                        <!-- Scanlines animation overlay when active -->
+                        <div id="scan-line" class="scan-line hidden"></div>
+                    </div>
+
+                    <!-- Current Prediction Status Bar -->
+                    <div class="prediction-bar-container">
+                        <div class="pred-meta">
+                            <span class="label">Prediksi Saat Ini:</span>
+                            <span id="current-letter" class="current-letter">-</span>
+                            <span id="current-confidence" class="current-confidence">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="confidence-bar" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Panel: Translation history & Spelling workspace -->
+                <section class="panel-card workspace-panel">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-keyboard text-secondary"></i> Ruang Kerja Penerjemahan</h2>
+                    </div>
+
+                    <!-- Accumulated Spelling Output -->
+                    <div class="translation-output-box">
+                        <div class="output-label">Teks Terjemahan</div>
+                        <div class="text-display-container">
+                            <div id="translated-text" class="translated-text-content">Mulai peragakan isyarat...</div>
+                            <span class="blinking-cursor">|</span>
+                        </div>
+                        <div class="workspace-controls">
+                            <button id="btn-space" class="btn btn-outline" title="Tambah Spasi">
+                                <i class="fa-solid fa-arrows-left-right"></i> Spasi
+                            </button>
+                            <button id="btn-backspace" class="btn btn-outline btn-warning" title="Hapus Huruf Terakhir">
+                                <i class="fa-solid fa-delete-left"></i> Hapus
+                            </button>
+                            <button id="btn-clear" class="btn btn-outline btn-danger" title="Hapus Semua Teks">
+                                <i class="fa-solid fa-trash-can"></i> Bersihkan
+                            </button>
+                            <button id="btn-speak" class="btn btn-secondary" title="Suarakan Teks">
+                                <i class="fa-solid fa-volume-high"></i> Suarakan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Realtime Detection Feed / Log -->
+                    <div class="feed-container">
+                        <div class="feed-header-row">
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Huruf Terdeteksi</h3>
+                            <button id="btn-clear-feed" class="btn-clear-feed" title="Hapus Riwayat">
+                                <i class="fa-solid fa-trash-can"></i> Hapus
+                            </button>
+                        </div>
+                        <div id="detection-feed" class="detection-feed-list">
+                            <div class="feed-placeholder">Belum ada huruf yang tersimpan</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Bottom Reference Panel (BISINDO Gesture Guide) -->
+            <section class="panel-card reference-panel">
+                <div class="card-header reference-toggle" id="reference-toggle">
+                    <h2><i class="fa-solid fa-book-open text-accent"></i> Panduan Isyarat Abjad BISINDO</h2>
+                    <i class="fa-solid fa-chevron-down toggle-icon" id="ref-chevron"></i>
+                </div>
+                
+                <div class="reference-content collapsed" id="reference-content">
+                    <p class="ref-intro">BISINDO (Bahasa Isyarat Indonesia) umumnya menggunakan dua tangan untuk mengeja abjad. Berikut adalah panduan singkat cara memperagakan abjad A sampai Z:</p>
+                    <div class="alphabet-grid">
+                        <!-- We will generate these programmatically or put detailed cards -->
+                        <div class="alphabet-card"><strong>A</strong><span>Kepalkan tangan kiri, sentuh dengan jari telunjuk kanan</span></div>
+                        <div class="alphabet-card"><strong>B</strong><span>Kedua tangan terbuka tegak, telapak berhadapan dekat</span></div>
+                        <div class="alphabet-card"><strong>C</strong><span>Tangan kanan membentuk huruf C setengah lingkaran</span></div>
+                        <div class="alphabet-card"><strong>D</strong><span>Tangan kiri membentuk lengkungan, tangan kanan lurus membentuk D</span></div>
+                        <div class="alphabet-card"><strong>E</strong><span>Ujung telunjuk kanan menyentuh ujung jari tengah kiri</span></div>
+                        <div class="alphabet-card"><strong>F</strong><span>Dua jari kanan diletakkan bersilang di atas telunjuk kiri</span></div>
+                        <div class="alphabet-card"><strong>G</strong><span>Kedua tangan dikepalkan, ditumpuk atas bawah</span></div>
+                        <div class="alphabet-card"><strong>H</strong><span>Tangan kiri mendatar, tangan kanan menyapu ke depan di atasnya</span></div>
+                        <div class="alphabet-card"><strong>I</strong><span>Kelingking kanan tegak lurus menyentuh telapak kiri terbuka</span></div>
+                        <div class="alphabet-card"><strong>J</strong><span>Gambarkan bentuk huruf J di udara dengan kelingking kanan</span></div>
+                        <div class="alphabet-card"><strong>K</strong><span>Telunjuk kanan menyentuh bagian tengah telunjuk kiri tegak</span></div>
+                        <div class="alphabet-card"><strong>L</strong><span>Tangan kanan membentuk sudut siku-siku (L) dengan jempol & telunjuk</span></div>
+                        <div class="alphabet-card"><strong>M</strong><span>Tiga jari kanan menyentuh telapak tangan kiri</span></div>
+                        <div class="alphabet-card"><strong>N</strong><span>Dua jari kanan menyentuh telapak tangan kiri</span></div>
+                        <div class="alphabet-card"><strong>O</strong><span>Kedua tangan membentuk lingkaran bulat bersama-sama</span></div>
+                        <div class="alphabet-card"><strong>P</strong><span>Telunjuk kanan membentuk lingkaran di atas telunjuk kiri tegak</span></div>
+                        <div class="alphabet-card"><strong>Q</strong><span>Jempol dan telunjuk membentuk lingkaran kecil di bawah</span></div>
+                        <div class="alphabet-card"><strong>R</strong><span>Jari telunjuk kanan disilangkan di atas jari telunjuk kiri</span></div>
+                        <div class="alphabet-card"><strong>S</strong><span>Kaitkan kedua jari kelingking kanan dan kiri</span></div>
+                        <div class="alphabet-card"><strong>T</strong><span>Telunjuk kanan tegak menyentuh telapak kiri mendatar</span></div>
+                        <div class="alphabet-card"><strong>U</strong><span>Ujung telunjuk dan tengah kanan menyentuh telapak kiri</span></div>
+                        <div class="alphabet-card"><strong>V</strong><span>Dua jari kanan membentuk huruf V di atas telapak kiri</span></div>
+                        <div class="alphabet-card"><strong>W</strong><span>Tiga jari kanan membentuk huruf W di atas telapak kiri</span></div>
+                        <div class="alphabet-card"><strong>X</strong><span>Kedua telunjuk kanan dan kiri disilangkan membentuk X</span></div>
+                        <div class="alphabet-card"><strong>Y</strong><span>Jempol dan kelingking kanan tegak, diletakkan di telapak kiri</span></div>
+                        <div class="alphabet-card"><strong>Z</strong><span>Dua telapak tangan ditempelkan miring berhadapan</span></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2026 SignTalk Project. Didukung oleh Keras 3 & PyTorch.</p>
+        </footer>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
